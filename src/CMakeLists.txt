@@ -20,6 +20,9 @@ add_library(HTTP_lib STATIC
     xml_ptree.cpp
     make_connection.cpp
     make_tls_connection.cpp
+    basic_get_request.cpp
+    basic_post_request.cpp
+    oauth_bearer_token_request.cpp
     )
 
 target_include_directories(HTTP_lib

@@ -14,12 +14,6 @@
 namespace http {
 namespace oauth {
 
-/// Generate a request for a bearer token.
-HTTP_request bearer_token_request(const std::string& consumer_key,
-                                  const std::string& consumer_secret,
-                                  const std::string& host,
-                                  const std::string& URI = "/oauth2/token");
-
 /// Inserts the bearer token into the request's header.
 void insert_bearer_token(HTTP_request& request,
                          const std::string& bearer_token);
