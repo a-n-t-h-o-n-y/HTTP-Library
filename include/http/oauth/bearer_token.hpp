@@ -1,6 +1,5 @@
 #ifndef HTTP_OAUTH_BEARER_TOKEN_HPP
 #define HTTP_OAUTH_BEARER_TOKEN_HPP
-#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -33,7 +32,6 @@ std::string get_bearer_token(const HTTP_request& bearer_token_request,
     HTTP_response bearer_response = http::read(socket);
     auto ptree = parse::json_ptree(bearer_response.message_body);
     if (ptree.get("token_type", "") != "bearer") {
-        std::cout << to_string(bearer_response) << std::endl;
         throw std::runtime_error("Invalid bearer token type");
     }
     return ptree.get("access_token", "");

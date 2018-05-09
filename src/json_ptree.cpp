@@ -16,5 +16,11 @@ boost::property_tree::ptree json_ptree(const std::string& json_text) {
     return root;
 }
 
+std::string json_string(const boost::property_tree::ptree& ptree) {
+    std::stringstream ss;
+    write_json(ss, ptree, true);
+    return ss.str();
+}
+
 }  // namespace parse
 }  // namespace http
