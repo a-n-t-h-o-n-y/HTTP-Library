@@ -18,6 +18,8 @@ add_library(HTTP_lib STATIC
     base64_encode.cpp
     json_ptree.cpp
     xml_ptree.cpp
+    make_connection.cpp
+    make_tls_connection.cpp
     )
 
 target_include_directories(HTTP_lib

@@ -24,7 +24,6 @@ HTTP_request bearer_token_request(const std::string& consumer_key,
     bearer_request.request_line.HTTP_version = "HTTP/1.1";
 
     bearer_request.headers["accept"] = "*/*";
-    bearer_request.headers["connection"] = "close";
     bearer_request.headers["content-type"] =
         "application/x-www-form-urlencoded;charset=UTF-8";
     bearer_request.headers["host"] = host;
