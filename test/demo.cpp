@@ -38,7 +38,6 @@ int main(int argc, char* argv[]) {
 
     // Send Request via Socket
     http::send(request, socket);
-    std::cout << "Request sent" << std::endl;
 
     // Read Back a Response from the Socket.
     try {

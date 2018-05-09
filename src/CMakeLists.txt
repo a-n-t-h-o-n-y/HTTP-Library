@@ -16,6 +16,7 @@ add_library(HTTP_lib STATIC
     to_lowercase.cpp
     bearer_token.cpp
     base64_encode.cpp
+    json_ptree.cpp
     )
 
 target_include_directories(HTTP_lib

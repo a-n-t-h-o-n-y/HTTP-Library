@@ -15,9 +15,6 @@ HTTP_request bearer_token_request(const std::string& consumer_key,
                                   const std::string& URI) {
     std::string token_credentials{detail::url_encode(consumer_key) + ':' +
                                   detail::url_encode(consumer_secret)};
-    // std::vector<unsigned char> token_base64(std::begin(token_credentials),
-    //                                         std::end(token_credentials));
-    // token_credentials = detail::base64_encode(token_base64);
     token_credentials = detail::base64_encode(token_credentials);
     HTTP_request bearer_request;
 
