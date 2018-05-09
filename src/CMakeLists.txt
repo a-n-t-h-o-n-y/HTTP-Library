@@ -23,6 +23,8 @@ add_library(HTTP_lib STATIC
     basic_get_request.cpp
     basic_post_request.cpp
     oauth_bearer_token_request.cpp
+    oauth_helper.cpp
+    account_authorize.cpp
     )
 
 target_include_directories(HTTP_lib
