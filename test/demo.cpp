@@ -21,10 +21,6 @@ int main(int argc, char* argv[]) {
 
     // Connect Socket to Endpoint
     boost::asio::ip::tcp::resolver resolver{io_s};
-    // boost::asio::ip::tcp::resolver::results_type endpoints{
-    //     resolver.resolve("www.google.com", "http")};
-    // boost::asio::ip::tcp::resolver::results_type endpoints{
-    //     resolver.resolve("www.httpbin.org", "https")};
     boost::asio::ip::tcp::resolver::results_type endpoints{
         resolver.resolve(ep, "http")};
     boost::asio::connect(socket, endpoints);
@@ -32,19 +28,11 @@ int main(int argc, char* argv[]) {
     // Create Request
     http::HTTP_request request;
     request.request_line.HTTP_method = "GET";
-    // request.request_line.URI = "/search";
-    // request.request_line.URI = "/intl/en/about/";
-    // request.request_line.URI = "/Protocols/";
-    // request.request_line.URI = "/stream-bytes/1024";
-    // request.request_line.URI = "/";
     request.request_line.URI = resource;
-    // request.request_line.URI = "/about/philosophy";
     request.request_line.HTTP_version = "HTTP/1.1";
-    // request.request_line.queries["q"] = "wikipedia";
 
     request.headers["User-Agent"] =
         "Mozilla/4.0 (compatible; MSIE5.01; Windows NT)";
-    // request.headers["Host"] = "www.httpbin.org";
     request.headers["Host"] = ep;
     request.headers["Accept-Language"] = "en-us";
 

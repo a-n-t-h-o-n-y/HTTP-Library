@@ -3,4 +3,5 @@
 *.o
 notes/
 build/
+test/twitter_demo.cpp
 

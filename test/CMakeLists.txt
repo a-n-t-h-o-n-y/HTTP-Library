@@ -2,8 +2,12 @@
 add_executable(demo
     demo.cpp
     )
-
 target_link_libraries(demo HTTP_lib)
+
+add_executable(twit
+    twitter_demo.cpp
+    )
+target_link_libraries(twit HTTP_lib)
 
 # TESTS
 add_executable(test_http

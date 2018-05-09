@@ -1,5 +1,6 @@
 find_package(Boost COMPONENTS system iostreams REQUIRED)
 find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 add_library(HTTP_lib STATIC
     status_line.cpp
@@ -13,14 +14,22 @@ add_library(HTTP_lib STATIC
     key_value_encode.cpp
     url_encode.cpp
     to_lowercase.cpp
+    bearer_token.cpp
+    base64_encode.cpp
     )
 
-target_include_directories(HTTP_lib PUBLIC
-    ${CMAKE_SOURCE_DIR}/include/
-    ${Boost_INCLUDE_DIRS}
+target_include_directories(HTTP_lib
+    PUBLIC
+        ${CMAKE_SOURCE_DIR}/include/
+        ${Boost_INCLUDE_DIRS}
+    PRIVATE
+        ${OPENSSL_INCLUDE_DIR}
     )
 
-target_link_libraries(HTTP_lib PUBLIC
-    ${Boost_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
+target_link_libraries(HTTP_lib
+    PUBLIC
+        ${Boost_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+    PRIVATE
+        ${OPENSSL_LIBRARIES}
     )

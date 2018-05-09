@@ -10,12 +10,13 @@
 namespace http {
 
 /// Helper function to send an HTTP_data object to an endpoint.
-template <typename Protocol>
-void send(const HTTP_request& request,
-          boost::asio::basic_stream_socket<Protocol>& socket) {
+template <typename Socket>
+void send(const HTTP_request& request, Socket& socket) {
     std::string str{to_string(request)};
     boost::asio::write(socket, boost::asio::buffer(str));
 }
+
+// void send_https();
 
 }  // namespace http
 #endif  // HTTP_SEND_HPP

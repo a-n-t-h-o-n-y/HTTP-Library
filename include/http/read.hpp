@@ -4,7 +4,7 @@
 #include <istream>
 #include <string>
 
-#include <utility/log.hpp>  // temp log
+// #include <utility/log.hpp>  // temp log
 
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/read.hpp>
@@ -23,12 +23,12 @@ namespace http {
 
 // TODO Should be read_response, no overloading on return type.
 /// Helper function to read from boost::stream_socket type into an HTTP_data.
-template <typename Protocol>
-HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
-    utility::Log log;
+template <typename Socket>
+HTTP_response read(Socket& socket) {
+    // utility::Log log;
     HTTP_response response;
     boost::asio::streambuf buffer;
-    log << "Initial Size of streambuf: " << buffer.size() << '\n';
+    // log << "Initial Size of streambuf: " << buffer.size() << '\n';
 
     // Status Line
     boost::system::error_code ec;
@@ -36,9 +36,9 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
     if (ec != 0) {
         throw boost::system::system_error(ec);
     }
-    log << "Status Line Read into buffer...\n";
-    log << "Bytes Transfered: " << n1 << '\n';
-    log << "Buffer Size: " << buffer.size() << '\n';
+    // log << "Status Line Read into buffer...\n";
+    // log << "Bytes Transfered: " << n1 << '\n';
+    // log << "Buffer Size: " << buffer.size() << '\n';
     std::cout << "Status Line Read Length: " << n1 << std::endl;
     std::istream status_stream(&buffer);
     status_stream >> response.status_line.HTTP_version;
@@ -49,8 +49,8 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
     }
     detail::verify_okay(response.status_line);
     std::cout << to_string(response.status_line) << std::endl;
-    log << "Status Line Read Out of Buffer...\n";
-    log << "Buffer Size: " << buffer.size() << '\n';
+    // log << "Status Line Read Out of Buffer...\n";
+    // log << "Buffer Size: " << buffer.size() << '\n';
 
     // Headers
     ec.clear();
@@ -59,9 +59,9 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
     if (ec && ec != boost::asio::error::eof) {
         throw boost::system::system_error(ec);
     }
-    log << "All Headers Read into Buffer...\n";
-    log << "Bytes Transfered: " << bytes_transfered << '\n';
-    log << "Buffer Size: " << buffer.size() << '\n';
+    // log << "All Headers Read into Buffer...\n";
+    // log << "Bytes Transfered: " << bytes_transfered << '\n';
+    // log << "Buffer Size: " << buffer.size() << '\n';
     std::cout << "Headers Read Length: " << bytes_transfered << std::endl;
 
     // READ ENTIRE HEADER
@@ -88,8 +88,8 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
             response.headers[key] = value;
         }
     }
-    log << "All Headers Read Out of Buffer...\n";
-    log << "Buffer Size: " << buffer.size() << '\n';
+    // log << "All Headers Read Out of Buffer...\n";
+    // log << "Buffer Size: " << buffer.size() << '\n';
 
     // Message Body
     // MAYBE remove the difference in the actual transfer rate from the
@@ -99,7 +99,7 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
     if (response.headers.count("content-length") == 1) {
         content_length = response.headers["content-length"];
     }
-    log.flush();
+    // log.flush();
     // Exact Length
     if (!content_length.empty()) {
         auto n = std::stoi(content_length);
@@ -115,15 +115,15 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
         if (ec && ec != boost::asio::error::eof) {
             throw boost::system::system_error(ec);
         }
-        log << "Exact Message Body Read into Buffer...\n";
-        log << "Bytes Transfered: " << read_n << '\n';
-        log << "Buffer Size: " << buffer.size() << '\n';
+        // log << "Exact Message Body Read into Buffer...\n";
+        // log << "Bytes Transfered: " << read_n << '\n';
+        // log << "Buffer Size: " << buffer.size() << '\n';
         std::cout << "Exact Length Body Read: " << read_n << std::endl;
         response.message_body.assign(read_n, ' ');
         std::istream length_stream(&buffer);
         length_stream.read(&response.message_body[0], read_n);
-        log << "Exact Message Body Read Out of Buffer...\n";
-        log << "Buffer Size: " << buffer.size() << '\n';
+        // log << "Exact Message Body Read Out of Buffer...\n";
+        // log << "Buffer Size: " << buffer.size() << '\n';
     } else if (response.headers.count("transfer-encoding") == 1 &&
                response.headers["transfer-encoding"] == "chunked") {
         while (true) {
@@ -147,9 +147,9 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
 
 /// Async function to read from streaming endpoints. Expects chunked encoding.
 /// returns status line and header from initial response.
-HTTP_response async_read(std::function<void(const Message_body&)> callback) {
-    return HTTP_response{};
-}
+// HTTP_response async_read(std::function<void(const Message_body&)> callback) {
+//     return HTTP_response{};
+// }
 
 }  // namespace http
 
