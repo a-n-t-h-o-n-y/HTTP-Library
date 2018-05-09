@@ -1,35 +1,67 @@
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/asio.hpp>
 
-// #include <http/http_request.hpp>
+#include <http/http_request.hpp>
+#include <http/http_response.hpp>
+#include <http/read.hpp>
+#include <http/send.hpp>
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc < 3) {
+        return 1;
+    }
+    std::string ep{argv[1]};
+    std::string resource{argv[2]};
+
     // Create Socket
     boost::asio::io_service io_s;
     boost::asio::ip::tcp::socket socket{io_s};
 
     // Connect Socket to Endpoint
     boost::asio::ip::tcp::resolver resolver{io_s};
+    // boost::asio::ip::tcp::resolver::results_type endpoints{
+    //     resolver.resolve("www.google.com", "http")};
+    // boost::asio::ip::tcp::resolver::results_type endpoints{
+    //     resolver.resolve("www.httpbin.org", "https")};
     boost::asio::ip::tcp::resolver::results_type endpoints{
-        // resolver.resolve("localhost", "http")};
-        resolver.resolve("www.google.com", "http")};
+        resolver.resolve(ep, "http")};
     boost::asio::connect(socket, endpoints);
 
-    // boost::asio::ip::tcp::endpoint endpoint{boost::asio::ip::tcp::endpoint(
-    //     boost::asio::ip::address::from_string("1.1.1.1"), 88)};
-    // socket.connect(endpoint);
-
-    socket.close();
     // Create Request
-    // HTTP_request request;
-    // request.message_body = "";
+    http::HTTP_request request;
+    request.request_line.HTTP_method = "GET";
+    // request.request_line.URI = "/search";
+    // request.request_line.URI = "/intl/en/about/";
+    // request.request_line.URI = "/Protocols/";
+    // request.request_line.URI = "/stream-bytes/1024";
+    // request.request_line.URI = "/";
+    request.request_line.URI = resource;
+    // request.request_line.URI = "/about/philosophy";
+    request.request_line.HTTP_version = "HTTP/1.1";
+    // request.request_line.queries["q"] = "wikipedia";
+
+    request.headers["User-Agent"] =
+        "Mozilla/4.0 (compatible; MSIE5.01; Windows NT)";
+    // request.headers["Host"] = "www.httpbin.org";
+    request.headers["Host"] = ep;
+    request.headers["Accept-Language"] = "en-us";
 
     // Send Request via Socket
-    // http::send();
+    http::send(request, socket);
+    std::cout << "Request sent" << std::endl;
 
     // Read Back a Response from the Socket.
-    // http::read();
+    try {
+        http::HTTP_response response = http::read(socket);
+        std::cout << "Response:\n" << to_string(response) << '\n';
+    } catch (const std::runtime_error& e) {
+        std::cout << e.what() << std::endl;
+        std::cout << "REQUEST:\n" << to_string(request) << std::endl;
+    }
 
+    // Close Socket
+    socket.close();
     return 0;
 }

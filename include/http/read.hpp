@@ -4,6 +4,8 @@
 #include <istream>
 #include <string>
 
+#include <utility/log.hpp>  // temp log
+
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/read_until.hpp>
@@ -12,104 +14,122 @@
 #include <boost/system/system_error.hpp>
 
 #include <http/detail/gzip.hpp>
+#include <http/detail/read_chunk.hpp>
+#include <http/detail/to_lowercase.hpp>
+#include <http/detail/verify_okay.hpp>
 #include <http/http_response.hpp>
 
 namespace http {
 
+// TODO Should be read_response, no overloading on return type.
 /// Helper function to read from boost::stream_socket type into an HTTP_data.
 template <typename Protocol>
 HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
+    utility::Log log;
     HTTP_response response;
     boost::asio::streambuf buffer;
+    log << "Initial Size of streambuf: " << buffer.size() << '\n';
 
     // Status Line
     boost::system::error_code ec;
-    boost::asio::read_until(socket, buffer, "\r\n", ec);
+    auto n1 = boost::asio::read_until(socket, buffer, "\r\n", ec);
     if (ec != 0) {
         throw boost::system::system_error(ec);
     }
-    std::istream input_stream(&buffer);
-    input_stream >> response.status_line.HTTP_version;
-    input_stream >> response.status_line.status_code;
-    std::getline(input_stream, response.status_line.reason_phrase, '\r');
+    log << "Status Line Read into buffer...\n";
+    log << "Bytes Transfered: " << n1 << '\n';
+    log << "Buffer Size: " << buffer.size() << '\n';
+    std::cout << "Status Line Read Length: " << n1 << std::endl;
+    std::istream status_stream(&buffer);
+    status_stream >> response.status_line.HTTP_version;
+    status_stream >> response.status_line.status_code;
+    std::getline(status_stream, response.status_line.reason_phrase, '\n');
+    if (!response.status_line.reason_phrase.empty()) {
+        response.status_line.reason_phrase.pop_back();  // remove \r
+    }
+    detail::verify_okay(response.status_line);
+    std::cout << to_string(response.status_line) << std::endl;
+    log << "Status Line Read Out of Buffer...\n";
+    log << "Buffer Size: " << buffer.size() << '\n';
 
     // Headers
     ec.clear();
-    boost::asio::read_until(socket, buffer, "\r\n\r\n", ec);
+    auto bytes_transfered =
+        boost::asio::read_until(socket, buffer, "\r\n\r\n", ec);
     if (ec && ec != boost::asio::error::eof) {
         throw boost::system::system_error(ec);
     }
+    log << "All Headers Read into Buffer...\n";
+    log << "Bytes Transfered: " << bytes_transfered << '\n';
+    log << "Buffer Size: " << buffer.size() << '\n';
+    std::cout << "Headers Read Length: " << bytes_transfered << std::endl;
+
+    // READ ENTIRE HEADER
+    // std::string all_headers(bytes_transfered, ' ');
+    // std::istream header_stream(&buffer);
+    // header_stream.read(&all_headers[0], bytes_transfered);
+    // std::cout << all_headers.find("\r\n\r\n") << '\n';
+    // std::cout << all_headers.size() << std::endl;
+    // std::cout << all_headers << std::endl;
+
     std::string line, key, value;
-    while (std::getline(input_stream, line, '\n')) {
+    std::istream header_stream(&buffer);
+    std::size_t bytes_used{0};
+    while (bytes_used < bytes_transfered &&
+           std::getline(header_stream, line, '\n')) {
+        bytes_used += line.size() + 1;  // plus  1 for \n not added to line
         if (line.size() > 2) {
-            line.pop_back();
+            line.pop_back();  // remove \r
             std::string::size_type pos = line.find(": ");
             key = std::string(std::begin(line), std::begin(line) + pos);
             value = std::string(std::begin(line) + pos + 2, std::end(line));
+            detail::to_lowercase(key);
+            detail::to_lowercase(value);
             response.headers[key] = value;
         }
     }
+    log << "All Headers Read Out of Buffer...\n";
+    log << "Buffer Size: " << buffer.size() << '\n';
 
     // Message Body
+    // MAYBE remove the difference in the actual transfer rate from the
+    // content-length or chunk size? but how do you get the actual transfered?
+    // Doesn't seen like a good solution.
     std::string content_length;
-    try {
-        content_length = response.headers.at("content-length");
-    } catch (...) {
-        std::cout << "invalid header" << '\n';
+    if (response.headers.count("content-length") == 1) {
+        content_length = response.headers["content-length"];
     }
+    log.flush();
     // Exact Length
     if (!content_length.empty()) {
         auto n = std::stoi(content_length);
+        // read() doesn't account for extra from read_until
+        std::size_t existing_bytes{buffer.size()};
+        n -= existing_bytes;
         // response.message_body = detail::read_length(*socket_ptr,
         //                          length, buffer_read);
         ec.clear();
         auto read_n = boost::asio::read(socket, buffer,
                                         boost::asio::transfer_exactly(n), ec);
+        read_n += existing_bytes;
         if (ec && ec != boost::asio::error::eof) {
             throw boost::system::system_error(ec);
         }
+        log << "Exact Message Body Read into Buffer...\n";
+        log << "Bytes Transfered: " << read_n << '\n';
+        log << "Buffer Size: " << buffer.size() << '\n';
+        std::cout << "Exact Length Body Read: " << read_n << std::endl;
         response.message_body.assign(read_n, ' ');
-        input_stream.read(&response.message_body[0], read_n);
-        // Chunked Response
-        // handle below exception at()
-    } else if (response.headers.at("transfer-encoding") == "chunked") {
+        std::istream length_stream(&buffer);
+        length_stream.read(&response.message_body[0], read_n);
+        log << "Exact Message Body Read Out of Buffer...\n";
+        log << "Buffer Size: " << buffer.size() << '\n';
+    } else if (response.headers.count("transfer-encoding") == 1 &&
+               response.headers["transfer-encoding"] == "chunked") {
         while (true) {
-            // std::string chunk{detail::read_chunk(*socket_ptr, buffer_read)};
+            std::string chunk{detail::read_chunk(socket, buffer)};
             // Read size
             // deadline for timeout operation.
-            ec.clear();
-            boost::asio::read_until(socket, buffer, "\r\n", ec);
-            if (ec && ec != boost::asio::error::eof) {
-                throw boost::system::system_error(ec);
-            }
-            std::string chunk_size_str;
-            input_stream >> chunk_size_str;
-            if (chunk_size_str.empty()) {
-                return response;
-            }
-            std::string::size_type chunk_size =
-                std::stoul(chunk_size_str, nullptr, 16);
-            std::string trash(2, ' ');
-            input_stream.read(&trash[0], 2);  // remove "/r/n"
-
-            // Read chunk
-            ec.clear();
-            auto read_n = boost::asio::read(
-                socket, buffer, boost::asio::transfer_exactly(chunk_size), ec);
-            if (ec && ec != boost::asio::error::eof) {
-                throw boost::system::system_error(ec);
-            }
-            std::string chunk(read_n, ' ');
-            input_stream.read(&chunk[0], read_n);
-
-            // Remove last "\r\n"
-            ec.clear();
-            boost::asio::read(socket, buffer, boost::asio::transfer_exactly(2),
-                              ec);
-            input_stream.read(&trash[0], 2);  // remove "/r/n"
-            if (ec && ec != boost::asio::error::eof) {
-                throw boost::system::system_error(ec);
-            }
             if (chunk.empty()) {
                 break;
             }
@@ -118,8 +138,8 @@ HTTP_response read(boost::asio::basic_stream_socket<Protocol>& socket) {
             }
         }
     }
-    // handle exception below
-    if (response.headers.at("content-encoding") == "gzip") {
+    if (response.headers.count("content-encoding") == 1 &&
+        response.headers["content-encoding"] == "gzip") {
         detail::decompress_gzip(response.message_body);
     }
     return response;

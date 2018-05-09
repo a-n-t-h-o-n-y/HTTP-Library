@@ -9,8 +9,10 @@ add_library(HTTP_lib STATIC
     http_response.cpp
     http_request.cpp
     gzip.cpp
+    verify_okay.cpp
     key_value_encode.cpp
     url_encode.cpp
+    to_lowercase.cpp
     )
 
 target_include_directories(HTTP_lib PUBLIC
