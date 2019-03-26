@@ -25,15 +25,15 @@ add_library(HTTP_lib STATIC
     oauth_bearer_token_request.cpp
     oauth_helper.cpp
     account_authorize.cpp
-    )
+)
 
 target_include_directories(HTTP_lib
     PUBLIC
-        ${CMAKE_SOURCE_DIR}/include/
+        ${PROJECT_SOURCE_DIR}/include/
         ${Boost_INCLUDE_DIRS}
     PRIVATE
         ${OPENSSL_INCLUDE_DIR}
-    )
+)
 
 target_link_libraries(HTTP_lib
     PUBLIC
@@ -41,4 +41,7 @@ target_link_libraries(HTTP_lib
         ${CMAKE_THREAD_LIBS_INIT}
     PRIVATE
         ${OPENSSL_LIBRARIES}
-    )
+)
+
+target_compile_features(HTTP_lib PRIVATE cxx_std_17)
+target_compile_options(HTTP_lib PRIVATE -Wall -Wextra)

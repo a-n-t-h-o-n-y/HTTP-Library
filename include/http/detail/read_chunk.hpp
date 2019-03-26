@@ -39,7 +39,10 @@ std::string read_chunk(Socket& socket, Buffer& buffer) {
     std::string chunk{read_length(socket, chunk_size, buffer)};
 
     // Last CRLF
-    boost::asio::read(socket, buffer, boost::asio::transfer_exactly(2), ec);
+    std::size_t existing_bytes{buffer.size()};
+    std::size_t transfer_bytes{existing_bytes >= 2 ? 0 : 2 - existing_bytes};
+    boost::asio::read(socket, buffer,
+                      boost::asio::transfer_exactly(transfer_bytes), ec);
     chunk_stream.read(&crlf[0], 2);  // remove "/r/n"
     if (ec && ec != boost::asio::error::eof) {
         throw boost::system::system_error(ec);

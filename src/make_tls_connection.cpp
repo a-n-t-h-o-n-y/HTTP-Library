@@ -28,7 +28,7 @@ std::unique_ptr<TLS_socket> make_tls_connection(
     boost::asio::connect(socket_ptr->lowest_layer(), endpoint_iterator);
     socket_ptr->set_verify_mode(boost::asio::ssl::verify_peer);
     socket_ptr->set_verify_callback(
-        boost::asio::ssl::rfc2818_verification("api.twitter.com"));
+        boost::asio::ssl::rfc2818_verification(host));
     socket_ptr->handshake(
         boost::asio::ssl::stream<boost::asio::ip::tcp::socket>::client);
     return socket_ptr;
