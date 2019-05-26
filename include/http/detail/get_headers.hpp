@@ -18,7 +18,7 @@ namespace detail {
 template <typename Socket, typename Buffer>
 Headers get_headers(Socket& socket, Buffer& buffer) {
     boost::system::error_code ec;
-    auto bytes_transfered =
+    auto bytes_transferred =
         boost::asio::read_until(socket, buffer, "\r\n\r\n", ec);
     if (ec && ec != boost::asio::error::eof) {
         throw boost::system::system_error(ec);
@@ -28,7 +28,7 @@ Headers get_headers(Socket& socket, Buffer& buffer) {
     std::istream header_stream(&buffer);
     std::size_t bytes_used{0};
     Headers headers;
-    while (bytes_used < bytes_transfered &&
+    while (bytes_used < bytes_transferred &&
            std::getline(header_stream, line, '\n')) {
         const int thrown_out_newline_length{1};
         bytes_used += line.size() + thrown_out_newline_length;

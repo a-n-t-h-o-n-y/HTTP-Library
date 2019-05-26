@@ -5,4 +5,4 @@ notes/
 build/
 test/twitter_demo.cpp
 tags
-
+compile_commands.json

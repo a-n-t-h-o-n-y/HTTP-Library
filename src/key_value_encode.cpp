@@ -11,10 +11,10 @@ namespace detail {
 
 std::string key_value_encode(std::map<std::string, std::string> parameters) {
     std::stringstream ss;
-    std::string seperator{""};
+    std::string separator{""};
     for (const auto& kv : parameters) {
-        ss << seperator << kv.first << '=' << url_encode(kv.second);
-        seperator = "&";
+        ss << separator << kv.first << '=' << url_encode(kv.second);
+        separator = "&";
     }
     return ss.str();
 }
